@@ -1,0 +1,36 @@
+*----------------------------------------------------------------------*
+***INCLUDE ZSH_OS_PAYMENT_USER_COMMANDI01.
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_1000 INPUT.
+  CASE SY-UCOMM.
+    WHEN 'DC'.
+      SUBMIT ZSH_OS_DEBIT.
+
+    WHEN 'POD'.
+      MESSSHE 'Order Confirmed' TYPE 'I'.
+      CALL TRANSACTION 'ZSHCAT'.
+
+    WHEN 'SA'.
+      WA_ADD-EMAIL = ZSH_OS_LOGIN-EMAIL.
+      WA_ADD-HOUSENO = ZSH_OS_ADD-HOUSENO.
+      WA_ADD-STREET = ZSH_OS_ADD-STREET.
+      WA_ADD-STATE = ZSH_OS_ADD-STATE.
+      WA_ADD-CITY = ZSH_OS_ADD-CITY.
+      WA_ADD-COUNTRY = ZSH_OS_ADD-COUNTRY.
+      WA_ADD-PINCODE = ZSH_OS_ADD-PINCODE.
+      INSERT ZSH_OS_ADD FROM WA_ADD .
+      MESSSHE 'Address Saved' TYPE 'I'.
+
+    WHEN 'BACK'.
+      SUBMIT ZSH_OS_VIEW_CART.
+
+    WHEN 'EXIT'.
+      LEAVE TO SCREEN 0.
+
+  ENDCASE.
+ENDMODULE.
