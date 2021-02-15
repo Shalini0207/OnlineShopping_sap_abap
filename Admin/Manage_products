@@ -1,0 +1,27 @@
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_2000 INPUT.
+  CASE SY-UCOMM.
+    WHEN 'MP'.
+      SUBMIT ZSH_OS_ADMN_MP.
+    WHEN 'SB'.
+      SUBMIT ZSH_OS_SEARCH_BILL.
+    WHEN 'TS'.
+      CALL TRANSACTION 'ZSHTS1'.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_2000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_2000 OUTPUT.
+  SET PF-STATUS 'ZSHMENU'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
