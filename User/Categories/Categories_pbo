@@ -1,0 +1,296 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZSHCATO01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE OUTPUT.
+  DATA: O_CL3  TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+      O_DOC3 TYPE REF TO CL_DD_DOCUMENT.
+  IF O_CL3 IS INITIAL.
+    CREATE OBJECT O_CL3 EXPORTING CONTAINER_NAME = 'CONT3'.
+  ENDIF.
+  IF O_DOC3 IS INITIAL.
+    CREATE OBJECT O_DOC3.
+  ENDIF.
+  CALL METHOD O_DOC3->ADD_PICTURE
+    EXPORTING
+      PICTURE_ID = 'CRICKET'
+*     WIDTH      =
+*     ALTERNATIVE_TEXT =
+*     TABINDEX   =
+    .
+CALL METHOD O_DOC3->DISPLAY_DOCUMENT
+  EXPORTING
+*    REUSE_CONTROL      =
+*    REUSE_REGISTRATION =
+*    CONTAINER          =
+    PARENT             = O_CL3
+*  EXCEPTIONS
+*    HTML_DISPLAY_ERROR = 1
+*    OTHERS             = 2
+        .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_1000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_1000 OUTPUT.
+  SET PF-STATUS 'ZSHMENU'.
+*  SET TITLEBAR 'xxx'.
+  GET PARAMETER ID 'CAR' FIELD ZSH_OS_LOGIN-EMAIL.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_MOBILE  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_MOBILE OUTPUT.
+DATA: O_CL1  TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+      O_DOC1 TYPE REF TO CL_DD_DOCUMENT..
+  IF O_CL1 IS INITIAL.
+    CREATE OBJECT O_CL1 EXPORTING CONTAINER_NAME = 'CONT1'.
+  ENDIF.
+  IF O_DOC1 IS INITIAL.
+    CREATE OBJECT O_DOC1.
+  ENDIF.
+  CALL METHOD O_DOC1->ADD_PICTURE
+    EXPORTING
+      PICTURE_ID = 'MOBILE'
+*     WIDTH      =
+*     ALTERNATIVE_TEXT =
+*     TABINDEX   =
+    .
+CALL METHOD O_DOC1->DISPLAY_DOCUMENT
+  EXPORTING
+*    REUSE_CONTROL      =
+*    REUSE_REGISTRATION =
+*    CONTAINER          =
+    PARENT             = O_CL1
+*  EXCEPTIONS
+*    HTML_DISPLAY_ERROR = 1
+*    OTHERS             = 2
+        .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_LAPTOP  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_LAPTOP OUTPUT.
+    DATA: O_CL2  TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+      O_DOC2 TYPE REF TO CL_DD_DOCUMENT.
+   IF O_CL2 IS INITIAL.
+    CREATE OBJECT O_CL2 EXPORTING CONTAINER_NAME = 'CONT2'.
+  ENDIF.
+  IF O_DOC2 IS INITIAL.
+    CREATE OBJECT O_DOC2.
+  ENDIF.
+  CALL METHOD O_DOC2->ADD_PICTURE
+    EXPORTING
+      PICTURE_ID = 'LAPTOP'
+*     WIDTH      =
+*     ALTERNATIVE_TEXT =
+*     TABINDEX   =
+    .
+CALL METHOD O_DOC2->DISPLAY_DOCUMENT
+  EXPORTING
+*    REUSE_CONTROL      =
+*    REUSE_REGISTRATION =
+*    CONTAINER          =
+    PARENT             = O_CL2
+*  EXCEPTIONS
+*    HTML_DISPLAY_ERROR = 1
+*    OTHERS             = 2
+        .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_LOGO  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_LOGO OUTPUT.
+   DATA: W_LINES TYPE I.
+  TYPES PICT_LINE(256) TYPE C.
+  DATA :
+  CONTAINER TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+  EDITOR TYPE REF TO CL_GUI_TEXTEDIT,
+  PICTURE TYPE REF TO CL_GUI_PICTURE,
+  PICT_TAB TYPE TABLE OF PICT_LINE,
+  URL(255) TYPE C.
+  DATA: GRAPHIC_URL(255).
+  DATA: BEGIN OF GRAPHIC_TABLE OCCURS 0,
+          LINE(255) TYPE X,
+        END OF GRAPHIC_TABLE.
+  DATA: L_GRAPHIC_CONV TYPE I.
+  DATA: L_GRAPHIC_OFFS TYPE I.
+  DATA: GRAPHIC_SIZE TYPE I.
+  DATA: L_GRAPHIC_XSTR TYPE XSTRING.
+  .
+  CALL METHOD CL_GUI_CFW=>FLUSH.
+  CREATE OBJECT:
+  CONTAINER EXPORTING CONTAINER_NAME = 'CONTLOGO',
+  PICTURE EXPORTING PARENT = CONTAINER.
+  CALL METHOD CL_SSF_XSF_UTILITIES=>GET_BDS_GRAPHIC_AS_BMP
+    EXPORTING
+      P_OBJECT       = 'GRAPHICS'
+      P_NAME         = 'logo'
+      P_ID           = 'BMAP'
+      P_BTYPE        = 'BCOL'
+    RECEIVING
+      P_BMP          = L_GRAPHIC_XSTR
+*  EXCEPTIONS
+*    NOT_FOUND      = 1
+*    INTERNAL_ERROR = 2
+*    others         = 3
+          .
+  IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+  GRAPHIC_SIZE = XSTRLEN( L_GRAPHIC_XSTR ).
+  L_GRAPHIC_CONV = GRAPHIC_SIZE.
+  L_GRAPHIC_OFFS = 0.
+  WHILE L_GRAPHIC_CONV > 255.
+    GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(255).
+    APPEND GRAPHIC_TABLE.
+    L_GRAPHIC_OFFS = L_GRAPHIC_OFFS + 255.
+    L_GRAPHIC_CONV = L_GRAPHIC_CONV - 255.
+  ENDWHILE.
+  GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(L_GRAPHIC_CONV).
+  APPEND GRAPHIC_TABLE.
+  CALL FUNCTION 'DP_CREATE_URL'
+    EXPORTING
+      TYPE     = 'IMSHE'
+      SUBTYPE  = 'X-UNKNOWN'
+      SIZE     = GRAPHIC_SIZE
+      LIFETIME = 'T'
+    TABLES
+      DATA     = GRAPHIC_TABLE
+    CHANGING
+      URL      = URL.
+  CALL METHOD PICTURE->LOAD_PICTURE_FROM_URL
+    EXPORTING
+      URL = URL.
+  CALL METHOD PICTURE->SET_DISPLAY_MODE
+    EXPORTING
+      DISPLAY_MODE = PICTURE->DISPLAY_MODE_FIT_CENTER.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_FOOTBALL  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_FOOTBALL OUTPUT.
+      DATA: O_CL4  TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+      O_DOC4 TYPE REF TO CL_DD_DOCUMENT.
+     IF O_CL4 IS INITIAL.
+    CREATE OBJECT O_CL4 EXPORTING CONTAINER_NAME = 'CONT4'.
+  ENDIF.
+  IF O_DOC4 IS INITIAL.
+    CREATE OBJECT O_DOC4.
+  ENDIF.
+  CALL METHOD O_DOC4->ADD_PICTURE
+    EXPORTING
+      PICTURE_ID = 'FOOTBALL'
+*     WIDTH      =
+*     ALTERNATIVE_TEXT =
+*     TABINDEX   =
+    .
+CALL METHOD O_DOC4->DISPLAY_DOCUMENT
+  EXPORTING
+*    REUSE_CONTROL      =
+*    REUSE_REGISTRATION =
+*    CONTAINER          =
+    PARENT             = O_CL4
+*  EXCEPTIONS
+*    HTML_DISPLAY_ERROR = 1
+*    OTHERS             = 2
+        .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_MS  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_MS OUTPUT.
+        DATA: O_CL5  TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+      O_DOC5 TYPE REF TO CL_DD_DOCUMENT.
+     IF O_CL5 IS INITIAL.
+    CREATE OBJECT O_CL5 EXPORTING CONTAINER_NAME = 'CONT5'.
+  ENDIF.
+  IF O_DOC5 IS INITIAL.
+    CREATE OBJECT O_DOC5.
+  ENDIF.
+  CALL METHOD O_DOC5->ADD_PICTURE
+    EXPORTING
+      PICTURE_ID = 'MENS'
+*     WIDTH      =
+*     ALTERNATIVE_TEXT =
+*     TABINDEX   =
+    .
+CALL METHOD O_DOC5->DISPLAY_DOCUMENT
+  EXPORTING
+*    REUSE_CONTROL      =
+*    REUSE_REGISTRATION =
+*    CONTAINER          =
+    PARENT             = O_CL5
+*  EXCEPTIONS
+*    HTML_DISPLAY_ERROR = 1
+*    OTHERS             = 2
+        .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_FS  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_FS OUTPUT.
+        DATA: O_CL6  TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+      O_DOC6 TYPE REF TO CL_DD_DOCUMENT.
+     IF O_CL6 IS INITIAL.
+    CREATE OBJECT O_CL6 EXPORTING CONTAINER_NAME = 'CONT6'.
+  ENDIF.
+  IF O_DOC6 IS INITIAL.
+    CREATE OBJECT O_DOC6.
+  ENDIF.
+  CALL METHOD O_DOC6->ADD_PICTURE
+    EXPORTING
+      PICTURE_ID = 'WOMENS'
+*     WIDTH      =
+*     ALTERNATIVE_TEXT =
+*     TABINDEX   =
+    .
+CALL METHOD O_DOC6->DISPLAY_DOCUMENT
+  EXPORTING
+*    REUSE_CONTROL      =
+*    REUSE_REGISTRATION =
+*    CONTAINER          =
+    PARENT             = O_CL6
+*  EXCEPTIONS
+*    HTML_DISPLAY_ERROR = 1
+*    OTHERS             = 2
+        .
+IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+ENDIF.
+ENDMODULE.
