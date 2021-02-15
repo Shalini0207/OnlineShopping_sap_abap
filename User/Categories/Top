@@ -1,0 +1,9 @@
+*&---------------------------------------------------------------------*
+*& Include ZSHCATTOP                                         Module Pool      ZSH_OS_CATEGORIES
+*&
+*&---------------------------------------------------------------------*
+PROGRAM ZSH_OS_CATEGORIES.
+TABLES: ZSH_OS_CAT,
+        ZSH_OS_LOGIN.
+
+DATA: USER_RESPONSE.
