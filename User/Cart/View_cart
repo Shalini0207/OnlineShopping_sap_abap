@@ -1,0 +1,382 @@
+REPORT ZSH_OS_VIEW_CART.
+TABLES:  ZSH_OS_CAT, ZSH_OS_CART, ZSH_OS_LOGIN.
+TYPES: BEGIN OF TY_CAT,
+         PID      TYPE ZSH_OS_CART-PID,
+         PNAME    TYPE ZSH_OS_CART-PNAME,
+         CATEGORY TYPE ZSH_OS_CART-CATEGORY,
+         TYPE     TYPE ZSH_OS_CART-TYPE,
+         PRICE    TYPE ZSH_OS_CART-PRICE,
+         QTY      TYPE ZSH_OS_CART-QTY,
+         AMOUNT   TYPE ZSH_OS_CART-AMOUNT,
+       END OF TY_CAT.
+
+*TYPES: BEGIN OF TY_BILL,
+*         BILLNO TYPE ZSH_OS_BILL-BILLNO,
+*         EMAIL  TYPE ZSH_OS_BILL-EMAIL,
+*         PID    TYPE ZSH_OS_BILL-PID,
+*         PNAME TYPE ZSH_OS_BILL-PNAME,
+*         PRICE TYPE ZSH_OS_BILL-PRICE,
+*         QTY TYPE ZSH_OS_BILL-QTY,
+*         AMOUNT TYPE ZSH_OS_BILL-AMOUNT,
+*       END OF TY_BILL.
+*
+*TYPES: BEGIN OF TY_BILL_N,
+*         BILLNO TYPE ZSH_OS_BILL-BILLNO,
+*       END OF TY_BILL_N.
+*
+*TYPES: BEGIN OF TY_BILL_h,
+*         BILLNO TYPE ZSH_OS_BILL_h-BILLNO,
+*         EMAIL  TYPE ZSH_OS_BILL_h-EMAIL,
+*         BDATE  TYPE ZSH_OS_BILL_h-BDATE,
+*         BTIME  TYPE ZSH_OS_BILL_h-BTIME,
+*   AMOUNT TYPE ZSH_OS_BILL_h-AMOUNT,
+*       END OF TY_BILL_h.
+
+
+DATA : CONTAINER TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+       GRID      TYPE REF TO CL_GUI_ALV_GRID.
+
+DATA: IT_FCAT TYPE LVC_T_FCAT,
+      WA_FCAT TYPE LVC_S_FCAT.
+
+DATA: IT_CART TYPE TABLE OF ZSH_OS_CART,
+      WA_CART TYPE ZSH_OS_CART.
+
+*DATA: IT_BILL TYPE TABLE OF TY_BILL,
+*      WA_BILL TYPE TY_BILL.
+*
+*DATA: IT_BILL_N TYPE TABLE OF TY_BILL_N,
+*      WA_BILL_N TYPE TY_BILL_N.
+*
+*DATA: IT_BILL_h TYPE TABLE OF TY_BILL_h,
+*      WA_BILL_h TYPE TY_BILL_h.
+
+DATA: USER_RESPONSE.
+
+*DATA: BILLN TYPE ZSH_OS_BILL-BILLNO,
+*      AMNT TYPE ZSH_OS_CART-AMOUNT.
+
+
+
+START-OF-SELECTION.
+
+  WA_FCAT-COL_POS = '1'.
+  WA_FCAT-FIELDNAME = 'PID'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Product Id'.
+  WA_FCAT-SELTEXT = 'Product Id'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C1'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '2'.
+  WA_FCAT-FIELDNAME = 'PNAME'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Product Name'.
+  WA_FCAT-SELTEXT = 'Product Name'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C2'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '3'.
+  WA_FCAT-FIELDNAME = 'CATEGORY'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Category'.
+  WA_FCAT-SELTEXT = 'Category'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C3'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '4'.
+  WA_FCAT-FIELDNAME = 'TYPE'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Type'.
+  WA_FCAT-SELTEXT = 'Type'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C4'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '5'.
+  WA_FCAT-FIELDNAME = 'PRICE'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Price'.
+  WA_FCAT-SELTEXT = 'Price'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C5'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '6'.
+  WA_FCAT-FIELDNAME = 'QTY'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Quantity'.
+  WA_FCAT-SELTEXT = 'Quantity'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C6'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '7'.
+  WA_FCAT-FIELDNAME = 'AMOUNT'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_CART'.
+  WA_FCAT-TABNAME = 'IT_CART'.
+  WA_FCAT-COLTEXT = 'Amount'.
+  WA_FCAT-SELTEXT = 'Amount'.
+  WA_FCAT-OUTPUTLEN = 20.
+  WA_FCAT-EMPHASIZE = 'C7'.
+  WA_FCAT-DO_SUM = 'X'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+
+
+
+
+  CALL SCREEN 1000.
+
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_1000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_1000 OUTPUT.
+  SET PF-STATUS 'ZSHMENU'.
+  SET TITLEBAR 'xxx'.
+  GET PARAMETER ID 'CAR' FIELD ZSH_OS_LOGIN-EMAIL.
+
+  SELECT PID
+       EMAIL
+       PNAME
+       CATEGORY
+       TYPE
+       PRICE
+       QTY
+       AMOUNT FROM ZSH_OS_CART INTO TABLE IT_CART WHERE EMAIL = ZSH_OS_LOGIN-EMAIL.
+
+  IF CONTAINER IS INITIAL.
+    CREATE OBJECT CONTAINER
+      EXPORTING
+*       PARENT         =
+        CONTAINER_NAME = 'CONTAINER'
+*       STYLE          =
+*       LIFETIME       = lifetime_default
+*       REPID          =
+*       DYNNR          =
+*       NO_AUTODEF_PROGID_DYNNR     =
+*  EXCEPTIONS
+*       CNTL_ERROR     = 1
+*       CNTL_SYSTEM_ERROR           = 2
+*       CREATE_ERROR   = 3
+*       LIFETIME_ERROR = 4
+*       LIFETIME_DYNPRO_DYNPRO_LINK = 5
+*       OTHERS         = 6
+      .
+    IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+    ENDIF.
+  ENDIF.
+  IF GRID IS INITIAL.
+    CREATE OBJECT GRID
+      EXPORTING
+*       I_SHELLSTYLE      = 0
+*       I_LIFETIME        =
+        I_PARENT = CONTAINER
+*       I_APPL_EVENTS     = space
+*       I_PARENTDBG       =
+*       I_APPLOGPARENT    =
+*       I_GRAPHICSPARENT  =
+*       I_NAME   =
+*       I_FCAT_COMPLETE   = SPACE
+*  EXCEPTIONS
+*       ERROR_CNTL_CREATE = 1
+*       ERROR_CNTL_INIT   = 2
+*       ERROR_CNTL_LINK   = 3
+*       ERROR_DP_CREATE   = 4
+*       OTHERS   = 5
+      .
+    IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+    ENDIF.
+
+  ENDIF.
+  CALL METHOD GRID->SET_TABLE_FOR_FIRST_DISPLAY
+*  EXPORTING
+*    I_BUFFER_ACTIVE               =
+*    I_BYPASSING_BUFFER            =
+*    I_CONSISTENCY_CHECK           =
+*    I_STRUCTURE_NAME              = ' '
+*    IS_VARIANT                    =
+*    I_SAVE                        =
+*    I_DEFAULT                     = 'X'
+*    IS_LAYOUT                     =
+*    IS_PRINT                      =
+*    IT_SPECIAL_GROUPS             =
+*    IT_TOOLBAR_EXCLUDING          =
+*    IT_HYPERLINK                  =
+*    IT_ALV_GRAPHICS               =
+*    IT_EXCEPT_QINFO               =
+*    IR_SALV_ADAPTER               =
+    CHANGING
+      IT_OUTTAB       = IT_CART
+      IT_FIELDCATALOG = IT_FCAT
+*     IT_SORT         =
+*     IT_FILTER       =
+*  EXCEPTIONS
+*     INVALID_PARAMETER_COMBINATION = 1
+*     PROGRAM_ERROR   = 2
+*     TOO_MANY_LINES  = 3
+*     OTHERS          = 4
+    .
+  IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_1000 INPUT.
+  CASE SY-UCOMM.
+    WHEN 'LG'.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          TITLEBAR              = 'User Prompt'
+          TEXT_QUESTION         = 'Are you sure you want to logout?'
+          TEXT_BUTTON_1         = 'YES'(001)
+          TEXT_BUTTON_2         = 'NO'(002)
+          DEFAULT_BUTTON        = '1' " Yes, of course you like ABAP programs
+          DISPLAY_CANCEL_BUTTON = ' '
+        IMPORTING
+          ANSWER                = USER_RESPONSE
+        EXCEPTIONS
+          TEXT_NOT_FOUND        = 1
+          OTHERS                = 2.
+
+      IF SY-SUBRC <> 0.
+        WRITE 'An error occured with this program'.
+        EXIT.
+      ENDIF.
+
+      IF USER_RESPONSE = '1'.
+        CALL TRANSACTION 'ZSHLG'.
+      ENDIF.
+    WHEN 'BACK'.
+      CALL TRANSACTION 'ZSHCAT'.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'PAY'.
+*      SELECT BILLNO FROM ZSH_OS_BILL INTO wa_BILL_N.
+*        ENDSELECT.
+*       BILLN = WA_BILL_N + 1.
+*      LOOP AT IT_CART INTO WA_CART.
+*        WA_BILL-PID = WA_CART-PID.
+*        WA_BILL-BILLNO = BILLN.
+*        WA_BILL-EMAIL = ZSH_OS_LOGIN-EMAIL.
+*        WA_BILL-AMOUNT = WA_CART-AMOUNT.
+*        WA_BILL-QTY = WA_CART-QTY.
+*        WA_BILL-PRICE = WA_CART-PRICE.
+*        WA_BILL-PNAME = WA_CART-PNAME.
+*        amnt = amnt + wa_cart-amount.
+*        APPEND WA_BILL TO IT_BILL.
+*      ENDLOOP.
+*      WA_BILL_H-BILLNO = BILLN.
+*      wa_bill_h-email = zSH_os_login-email.
+*      wa_bill_h-BDATE = SY-DATUM.
+*      WA_BILL_H-BTIME = SY-UZEIT.
+*      WA_BILL_H-AMOUNT = AMNT.
+*
+*
+*      INSERT ZSH_OS_BILL FROM TABLE IT_BILL.
+*      INSERT zSH_os_bill_h FROM WA_BILL_H.
+*      DELETE FROM ZSH_OS_CART WHERE EMAIL = ZSH_OS_LOGIN-EMAIL.
+
+      CALL TRANSACTION 'ZSHPAY'.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_IMSHE_LOGO  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_IMSHE_LOGO OUTPUT.
+  DATA: W_LINES TYPE I.
+  TYPES PICT_LINE(256) TYPE C.
+  DATA :
+  CONTAINER1 TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+  EDITOR TYPE REF TO CL_GUI_TEXTEDIT,
+  PICTURE TYPE REF TO CL_GUI_PICTURE,
+  PICT_TAB TYPE TABLE OF PICT_LINE,
+  URL(255) TYPE C.
+  DATA: GRAPHIC_URL(255).
+  DATA: BEGIN OF GRAPHIC_TABLE OCCURS 0,
+          LINE(255) TYPE X,
+        END OF GRAPHIC_TABLE.
+  DATA: L_GRAPHIC_CONV TYPE I.
+  DATA: L_GRAPHIC_OFFS TYPE I.
+  DATA: GRAPHIC_SIZE TYPE I.
+  DATA: L_GRAPHIC_XSTR TYPE XSTRING.
+  .
+  CALL METHOD CL_GUI_CFW=>FLUSH.
+  CREATE OBJECT:
+  CONTAINER1 EXPORTING CONTAINER_NAME = 'CONTLOGO',
+  PICTURE EXPORTING PARENT = CONTAINER1.
+  CALL METHOD CL_SSF_XSF_UTILITIES=>GET_BDS_GRAPHIC_AS_BMP
+    EXPORTING
+      P_OBJECT       = 'GRAPHICS'
+      P_NAME         = 'logo'
+      P_ID           = 'BMAP'
+      P_BTYPE        = 'BCOL'
+    RECEIVING
+      P_BMP          = L_GRAPHIC_XSTR
+*  EXCEPTIONS
+*    NOT_FOUND      = 1
+*    INTERNAL_ERROR = 2
+*    others         = 3
+          .
+  IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+  GRAPHIC_SIZE = XSTRLEN( L_GRAPHIC_XSTR ).
+  L_GRAPHIC_CONV = GRAPHIC_SIZE.
+  L_GRAPHIC_OFFS = 0.
+  WHILE L_GRAPHIC_CONV > 255.
+    GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(255).
+    APPEND GRAPHIC_TABLE.
+    L_GRAPHIC_OFFS = L_GRAPHIC_OFFS + 255.
+    L_GRAPHIC_CONV = L_GRAPHIC_CONV - 255.
+  ENDWHILE.
+  GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(L_GRAPHIC_CONV).
+  APPEND GRAPHIC_TABLE.
+  CALL FUNCTION 'DP_CREATE_URL'
+    EXPORTING
+      TYPE     = 'IMSHE'
+      SUBTYPE  = 'X-UNKNOWN'
+      SIZE     = GRAPHIC_SIZE
+      LIFETIME = 'T'
+    TABLES
+      DATA     = GRAPHIC_TABLE
+    CHANGING
+      URL      = URL.
+  CALL METHOD PICTURE->LOAD_PICTURE_FROM_URL
+    EXPORTING
+      URL = URL.
+  CALL METHOD PICTURE->SET_DISPLAY_MODE
+    EXPORTING
+      DISPLAY_MODE = PICTURE->DISPLAY_MODE_FIT_CENTER.
+ENDMODULE.
