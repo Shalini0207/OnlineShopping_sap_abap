@@ -1,0 +1,558 @@
+REPORT ZSH_OS_SEARCH_BILL.
+TABLES: ZSH_OS_BILL_H,
+        ZSH_OS_REGISTER.
+
+TYPES: BEGIN OF TY_BILL_H,
+         BILLNO TYPE ZSH_OS_BILL_H-BILLNO,
+         NAME   TYPE ZSH_OS_REGISTER-NAME,
+         BDATE  TYPE ZSH_OS_BILL_H-BDATE,
+         BTIME  TYPE ZSH_OS_BILL_H-BTIME,
+         AMOUNT TYPE ZSH_OS_BILL_H-AMOUNT,
+
+       END OF TY_BILL_H.
+
+TYPES: BEGIN OF TY_HIDE,
+         BILLNO TYPE ZSH_OS_BILL_H-BILLNO,
+        NAME   TYPE ZSH_OS_REGISTER-NAME,
+       END OF TY_HIDE.
+
+
+SELECTION-SCREEN BEGIN OF SCREEN 2100 AS SUBSCREEN.
+SELECT-OPTIONS: S_BILLNO FOR ZSH_OS_BILL_H-BILLNO.
+SELECTION-SCREEN END OF SCREEN 2100.
+
+SELECTION-SCREEN BEGIN OF SCREEN 3100 AS SUBSCREEN.
+SELECT-OPTIONS: S_BDATE FOR ZSH_OS_BILL_H-BDATE.
+SELECTION-SCREEN END OF SCREEN 3100.
+
+SELECTION-SCREEN BEGIN OF SCREEN 4100 AS SUBSCREEN.
+PARAMETERS: P_NAME TYPE ZSH_OS_REGISTER-NAME.
+SELECTION-SCREEN END OF SCREEN 4100.
+
+DATA: IT_BILL_H TYPE TABLE OF TY_BILL_H,
+      WA_BILL_H TYPE TY_BILL_H.
+
+DATA: IT_FCAT TYPE LVC_T_FCAT,
+      WA_FCAT TYPE LVC_S_FCAT.
+
+DATA: IT_HIDE TYPE TABLE OF TY_HIDE,
+      WA_HIDE TYPE TY_HIDE.
+
+DATA: IT_BILL_H1 TYPE TABLE OF TY_BILL_H,
+      WA_BILL_H1 TYPE TY_BILL_H.
+
+
+DATA : CONTAINER TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+       GRID      TYPE REF TO CL_GUI_ALV_GRID.
+
+DATA: WA_REG  TYPE ZSH_OS_REGISTER,
+      WA_ADDR TYPE ZSH_OS_ADD,
+      WA_BILL TYPE  ZSH_OS_BILL_H.
+
+DATA: IT_BD TYPE ZSH_TT_BILL,
+      WA_BD TYPE ZSH_STR_BILL.
+
+DATA: V_FM TYPE RS38L_FNAM.
+
+DATA: CONTROL        TYPE SSFCTRLOP, "Smart Forms: Control structure
+      OUTPUT_OPTIONS TYPE SSFCOMPOP. "Smart Composer (transfer) options
+
+
+
+CLASS LCL_RCVR_CLASS DEFINITION.
+  PUBLIC SECTION.
+    METHODS :
+      HANDLE_DOUBLE_CLICK FOR EVENT DOUBLE_CLICK OF CL_GUI_ALV_GRID
+        IMPORTING E_ROW E_COLUMN.
+ENDCLASS.                    "lcl_rcvr_class DEFINITION
+*----------------------------------------------------------------------
+* Local Class Implementation.
+*----------------------------------------------------------------------
+CLASS LCL_RCVR_CLASS IMPLEMENTATION.
+  METHOD HANDLE_DOUBLE_CLICK.
+    PERFORM DISPLAY.
+  ENDMETHOD.
+ENDCLASS.
+DATA: LP_RCVR TYPE REF TO LCL_RCVR_CLASS.
+
+START-OF-SELECTION.
+  WA_FCAT-COL_POS = '1'.
+  WA_FCAT-FIELDNAME = 'BILLNO'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_BILL_H'.
+  WA_FCAT-TABNAME = 'IT_BILL_H'.
+  WA_FCAT-COLTEXT = 'Bill Number'.
+  WA_FCAT-SELTEXT = 'Bill Number'.
+  WA_FCAT-OUTPUTLEN = 13.
+  WA_FCAT-EMPHASIZE = 'C1'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '2'.
+  WA_FCAT-FIELDNAME = 'NAME'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_REGISTER'.
+  WA_FCAT-TABNAME = 'IT_BILL_H'.
+  WA_FCAT-COLTEXT = 'Name'.
+  WA_FCAT-SELTEXT = 'Name'.
+  WA_FCAT-OUTPUTLEN = 13.
+  WA_FCAT-EMPHASIZE = 'C1'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '3'.
+  WA_FCAT-FIELDNAME = 'BDATE'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_BILL_H'.
+  WA_FCAT-TABNAME = 'IT_BILL_H'.
+  WA_FCAT-COLTEXT = 'Bill Date'.
+  WA_FCAT-SELTEXT = 'Bill Date'.
+  WA_FCAT-OUTPUTLEN = 13.
+  WA_FCAT-EMPHASIZE = 'C1'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '4'.
+  WA_FCAT-FIELDNAME = 'BTIME'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_BILL_H'.
+  WA_FCAT-TABNAME = 'IT_BILL_H'.
+  WA_FCAT-COLTEXT = 'Bill Time'.
+  WA_FCAT-SELTEXT = 'Bill Time'.
+  WA_FCAT-OUTPUTLEN = 13.
+  WA_FCAT-EMPHASIZE = 'C1'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+  WA_FCAT-COL_POS = '5'.
+  WA_FCAT-FIELDNAME = 'AMOUNT'.
+  WA_FCAT-REF_TABLE = 'ZSH_OS_BILL_H'.
+  WA_FCAT-TABNAME = 'IT_BILL_H'.
+  WA_FCAT-COLTEXT = 'Amount'.
+  WA_FCAT-SELTEXT = 'Amount'.
+  WA_FCAT-OUTPUTLEN = 13.
+  WA_FCAT-EMPHASIZE = 'C1'.
+  APPEND WA_FCAT TO IT_FCAT.
+  CLEAR WA_FCAT.
+
+
+
+  CALL SCREEN 1000.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_1000 INPUT.
+  CASE SY-UCOMM.
+    WHEN 'SN'.
+      SELECT A~BILLNO B~NAME A~BDATE A~BTIME A~AMOUNT
+               FROM ZSH_OS_REGISTER AS B INNER JOIN ZSH_OS_BILL_H AS A
+                          ON A~EMAIL =  B~EMAIL INTO TABLE IT_BILL_H WHERE B~NAME = P_NAME.
+
+
+      IF CONTAINER IS INITIAL.
+        CREATE OBJECT CONTAINER
+          EXPORTING
+*           PARENT         =
+            CONTAINER_NAME = 'CONTAINER'
+*           STYLE          =
+*           LIFETIME       = lifetime_default
+*           REPID          =
+*           DYNNR          =
+*           NO_AUTODEF_PROGID_DYNNR     =
+*  EXCEPTIONS
+*           CNTL_ERROR     = 1
+*           CNTL_SYSTEM_ERROR           = 2
+*           CREATE_ERROR   = 3
+*           LIFETIME_ERROR = 4
+*           LIFETIME_DYNPRO_DYNPRO_LINK = 5
+*           OTHERS         = 6
+          .
+        IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+        ENDIF.
+      ENDIF.
+      IF GRID IS INITIAL.
+        CREATE OBJECT GRID
+          EXPORTING
+*           I_SHELLSTYLE      = 0
+*           I_LIFETIME        =
+            I_PARENT = CONTAINER
+*           I_APPL_EVENTS     = space
+*           I_PARENTDBG       =
+*           I_APPLOGPARENT    =
+*           I_GRAPHICSPARENT  =
+*           I_NAME   =
+*           I_FCAT_COMPLETE   = SPACE
+*  EXCEPTIONS
+*           ERROR_CNTL_CREATE = 1
+*           ERROR_CNTL_INIT   = 2
+*           ERROR_CNTL_LINK   = 3
+*           ERROR_DP_CREATE   = 4
+*           OTHERS   = 5
+          .
+        IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+        ENDIF.
+
+      ENDIF.
+      CALL METHOD GRID->SET_TABLE_FOR_FIRST_DISPLAY
+*  EXPORTING
+*    I_BUFFER_ACTIVE               =
+*    I_BYPASSING_BUFFER            =
+*    I_CONSISTENCY_CHECK           =
+*    I_STRUCTURE_NAME              = ' '
+*    IS_VARIANT                    =
+*    I_SAVE                        =
+*    I_DEFAULT                     = 'X'
+*    IS_LAYOUT                     =
+*    IS_PRINT                      =
+*    IT_SPECIAL_GROUPS             =
+*    IT_TOOLBAR_EXCLUDING          =
+*    IT_HYPERLINK                  =
+*    IT_ALV_GRAPHICS               =
+*    IT_EXCEPT_QINFO               =
+*    IR_SALV_ADAPTER               =
+        CHANGING
+          IT_OUTTAB       = IT_BILL_H
+          IT_FIELDCATALOG = IT_FCAT
+*         IT_SORT         =
+*         IT_FILTER       =
+*  EXCEPTIONS
+*         INVALID_PARAMETER_COMBINATION = 1
+*         PROGRAM_ERROR   = 2
+*         TOO_MANY_LINES  = 3
+*         OTHERS          = 4
+        .
+      IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+      ENDIF.
+      CREATE OBJECT LP_RCVR.
+  SET HANDLER LP_RCVR->HANDLE_DOUBLE_CLICK FOR GRID.
+    WHEN 'SBN'.
+      SELECT A~BILLNO B~NAME A~BDATE A~BTIME A~AMOUNT
+              FROM ZSH_OS_REGISTER AS B INNER JOIN ZSH_OS_BILL_H AS A
+                         ON A~EMAIL =  B~EMAIL INTO TABLE IT_BILL_H WHERE A~BILLNO IN S_BILLNO.
+
+
+      IF CONTAINER IS INITIAL.
+        CREATE OBJECT CONTAINER
+          EXPORTING
+*           PARENT         =
+            CONTAINER_NAME = 'CONTAINER'
+*           STYLE          =
+*           LIFETIME       = lifetime_default
+*           REPID          =
+*           DYNNR          =
+*           NO_AUTODEF_PROGID_DYNNR     =
+*  EXCEPTIONS
+*           CNTL_ERROR     = 1
+*           CNTL_SYSTEM_ERROR           = 2
+*           CREATE_ERROR   = 3
+*           LIFETIME_ERROR = 4
+*           LIFETIME_DYNPRO_DYNPRO_LINK = 5
+*           OTHERS         = 6
+          .
+        IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+        ENDIF.
+      ENDIF.
+      IF GRID IS INITIAL.
+        CREATE OBJECT GRID
+          EXPORTING
+*           I_SHELLSTYLE      = 0
+*           I_LIFETIME        =
+            I_PARENT = CONTAINER
+*           I_APPL_EVENTS     = space
+*           I_PARENTDBG       =
+*           I_APPLOGPARENT    =
+*           I_GRAPHICSPARENT  =
+*           I_NAME   =
+*           I_FCAT_COMPLETE   = SPACE
+*  EXCEPTIONS
+*           ERROR_CNTL_CREATE = 1
+*           ERROR_CNTL_INIT   = 2
+*           ERROR_CNTL_LINK   = 3
+*           ERROR_DP_CREATE   = 4
+*           OTHERS   = 5
+          .
+        IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+        ENDIF.
+
+      ENDIF.
+      CALL METHOD GRID->SET_TABLE_FOR_FIRST_DISPLAY
+*  EXPORTING
+*    I_BUFFER_ACTIVE               =
+*    I_BYPASSING_BUFFER            =
+*    I_CONSISTENCY_CHECK           =
+*    I_STRUCTURE_NAME              = ' '
+*    IS_VARIANT                    =
+*    I_SAVE                        =
+*    I_DEFAULT                     = 'X'
+*    IS_LAYOUT                     =
+*    IS_PRINT                      =
+*    IT_SPECIAL_GROUPS             =
+*    IT_TOOLBAR_EXCLUDING          =
+*    IT_HYPERLINK                  =
+*    IT_ALV_GRAPHICS               =
+*    IT_EXCEPT_QINFO               =
+*    IR_SALV_ADAPTER               =
+        CHANGING
+          IT_OUTTAB       = IT_BILL_H
+          IT_FIELDCATALOG = IT_FCAT
+*         IT_SORT         =
+*         IT_FILTER       =
+*  EXCEPTIONS
+*         INVALID_PARAMETER_COMBINATION = 1
+*         PROGRAM_ERROR   = 2
+*         TOO_MANY_LINES  = 3
+*         OTHERS          = 4
+        .
+      IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+      ENDIF.
+      CREATE OBJECT LP_RCVR.
+  SET HANDLER LP_RCVR->HANDLE_DOUBLE_CLICK FOR GRID.
+    WHEN 'SBD'.
+      SELECT A~BILLNO B~NAME A~BDATE A~BTIME A~AMOUNT
+        FROM ZSH_OS_REGISTER AS B INNER JOIN ZSH_OS_BILL_H AS A
+                   ON A~EMAIL =  B~EMAIL INTO TABLE IT_BILL_H WHERE A~BDATE IN S_BDATE.
+
+
+      IF CONTAINER IS INITIAL.
+        CREATE OBJECT CONTAINER
+          EXPORTING
+*           PARENT         =
+            CONTAINER_NAME = 'CONTAINER'
+*           STYLE          =
+*           LIFETIME       = lifetime_default
+*           REPID          =
+*           DYNNR          =
+*           NO_AUTODEF_PROGID_DYNNR     =
+*  EXCEPTIONS
+*           CNTL_ERROR     = 1
+*           CNTL_SYSTEM_ERROR           = 2
+*           CREATE_ERROR   = 3
+*           LIFETIME_ERROR = 4
+*           LIFETIME_DYNPRO_DYNPRO_LINK = 5
+*           OTHERS         = 6
+          .
+        IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+        ENDIF.
+      ENDIF.
+      IF GRID IS INITIAL.
+        CREATE OBJECT GRID
+          EXPORTING
+*           I_SHELLSTYLE      = 0
+*           I_LIFETIME        =
+            I_PARENT = CONTAINER
+*           I_APPL_EVENTS     = space
+*           I_PARENTDBG       =
+*           I_APPLOGPARENT    =
+*           I_GRAPHICSPARENT  =
+*           I_NAME   =
+*           I_FCAT_COMPLETE   = SPACE
+*  EXCEPTIONS
+*           ERROR_CNTL_CREATE = 1
+*           ERROR_CNTL_INIT   = 2
+*           ERROR_CNTL_LINK   = 3
+*           ERROR_DP_CREATE   = 4
+*           OTHERS   = 5
+          .
+        IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+        ENDIF.
+
+      ENDIF.
+      CALL METHOD GRID->SET_TABLE_FOR_FIRST_DISPLAY
+*  EXPORTING
+*    I_BUFFER_ACTIVE               =
+*    I_BYPASSING_BUFFER            =
+*    I_CONSISTENCY_CHECK           =
+*    I_STRUCTURE_NAME              = ' '
+*    IS_VARIANT                    =
+*    I_SAVE                        =
+*    I_DEFAULT                     = 'X'
+*    IS_LAYOUT                     =
+*    IS_PRINT                      =
+*    IT_SPECIAL_GROUPS             =
+*    IT_TOOLBAR_EXCLUDING          =
+*    IT_HYPERLINK                  =
+*    IT_ALV_GRAPHICS               =
+*    IT_EXCEPT_QINFO               =
+*    IR_SALV_ADAPTER               =
+        CHANGING
+          IT_OUTTAB       = IT_BILL_H
+          IT_FIELDCATALOG = IT_FCAT
+*         IT_SORT         =
+*         IT_FILTER       =
+*  EXCEPTIONS
+*         INVALID_PARAMETER_COMBINATION = 1
+*         PROGRAM_ERROR   = 2
+*         TOO_MANY_LINES  = 3
+*         OTHERS          = 4
+        .
+      IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+      ENDIF.
+      CREATE OBJECT LP_RCVR.
+  SET HANDLER LP_RCVR->HANDLE_DOUBLE_CLICK FOR GRID.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_1000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_1000 OUTPUT.
+  SET PF-STATUS 'ZSHMENU'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+
+FORM DISPLAY .
+  DATA : W_LINES   TYPE I,
+         W_LINENO  TYPE LVC_T_ROW,
+         W_LINENO1 TYPE LVC_T_CELL,
+         WA        LIKE LINE OF W_LINENO,
+         WA1       LIKE LINE OF W_LINENO,
+         INDEX     TYPE I.
+  CALL METHOD GRID->GET_SELECTED_ROWS
+    IMPORTING
+      ET_INDEX_ROWS = W_LINENO.
+
+  LOOP AT W_LINENO INTO WA.
+    READ TABLE IT_BILL_H INDEX WA-INDEX INTO WA_BILL_H .
+    IF SY-SUBRC = 0.
+      WA_HIDE-BILLNO = WA_BILL_H-BILLNO.
+      WA_HIDE-NAME = WA_BILL_H-NAME.
+      APPEND WA_HIDE TO IT_HIDE.
+    ENDIF.
+  ENDLOOP.
+
+  IF NOT IT_HIDE IS INITIAL.
+
+
+    SELECT SINGLE * FROM ZSH_OS_REGISTER INTO WA_REG WHERE NAME = WA_HIDE-NAME.
+    SELECT SINGLE * FROM ZSH_OS_ADD AS A INNER JOIN ZSH_OS_REGISTER AS B
+                                    ON A~EMAIL = B~EMAIL INTO CORRESPONDING FIELDS OF WA_ADDR WHERE B~NAME = WA_HIDE-NAME.
+    SELECT SINGLE * FROM ZSH_OS_BILL_H INTO WA_BILL WHERE  BILLNO = WA_HIDE-BILLNO.
+    SELECT * FROM ZSH_OS_BILL INTO TABLE IT_BD WHERE BILLNO = WA_HIDE-BILLNO.
+
+
+CONTROL-PREVIEW = 'X'.
+CONTROL-NO_DIALOG = 'X'.
+OUTPUT_OPTIONS-TDDEST = 'LP01'.
+
+
+
+    CALL FUNCTION '/1BCDWB/SF00000540'
+      EXPORTING
+*       ARCHIVE_INDEX              =
+*       ARCHIVE_INDEX_TAB          =
+*       ARCHIVE_PARAMETERS         =
+       CONTROL_PARAMETERS         = CONTROL
+*       MAIL_APPL_OBJ              =
+*       MAIL_RECIPIENT             =
+*       MAIL_SENDER                =
+       OUTPUT_OPTIONS             = OUTPUT_OPTIONS
+       USER_SETTINGS              = ' '
+        WA_REG  = WA_REG
+        WA_ADDR = WA_ADDR
+        WA_BILL = WA_BILL
+        IT_BD   = IT_BD
+* IMPORTING
+*       DOCUMENT_OUTPUT_INFO       =
+*       JOB_OUTPUT_INFO            =
+*       JOB_OUTPUT_OPTIONS         =
+* EXCEPTIONS
+*       FORMATTING_ERROR           = 1
+*       INTERNAL_ERROR             = 2
+*       SEND_ERROR                 = 3
+*       USER_CANCELED              = 4
+*       OTHERS  = 5
+      .
+    IF SY-SUBRC <> 0.
+* Implement suitable error handling here
+    ENDIF.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_LOGO  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_LOGO OUTPUT.
+   DATA: W_LINES TYPE I.
+  TYPES PICT_LINE(256) TYPE C.
+  DATA :
+  CONTAINER2 TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+  EDITOR TYPE REF TO CL_GUI_TEXTEDIT,
+  PICTURE TYPE REF TO CL_GUI_PICTURE,
+  PICT_TAB TYPE TABLE OF PICT_LINE,
+  URL(255) TYPE C.
+  DATA: GRAPHIC_URL(255).
+  DATA: BEGIN OF GRAPHIC_TABLE OCCURS 0,
+          LINE(255) TYPE X,
+        END OF GRAPHIC_TABLE.
+  DATA: L_GRAPHIC_CONV TYPE I.
+  DATA: L_GRAPHIC_OFFS TYPE I.
+  DATA: GRAPHIC_SIZE TYPE I.
+  DATA: L_GRAPHIC_XSTR TYPE XSTRING.
+  .
+  CALL METHOD CL_GUI_CFW=>FLUSH.
+  CREATE OBJECT:
+  CONTAINER2 EXPORTING CONTAINER_NAME = 'CONTLOGO',
+  PICTURE EXPORTING PARENT = CONTAINER2.
+  CALL METHOD CL_SSF_XSF_UTILITIES=>GET_BDS_GRAPHIC_AS_BMP
+    EXPORTING
+      P_OBJECT       = 'GRAPHICS'
+      P_NAME         = 'LOGO'
+      P_ID           = 'BMAP'
+      P_BTYPE        = 'BCOL'
+    RECEIVING
+      P_BMP          = L_GRAPHIC_XSTR
+*  EXCEPTIONS
+*    NOT_FOUND      = 1
+*    INTERNAL_ERROR = 2
+*    others         = 3
+          .
+  IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+  GRAPHIC_SIZE = XSTRLEN( L_GRAPHIC_XSTR ).
+  L_GRAPHIC_CONV = GRAPHIC_SIZE.
+  L_GRAPHIC_OFFS = 0.
+  WHILE L_GRAPHIC_CONV > 255.
+    GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(255).
+    APPEND GRAPHIC_TABLE.
+    L_GRAPHIC_OFFS = L_GRAPHIC_OFFS + 255.
+    L_GRAPHIC_CONV = L_GRAPHIC_CONV - 255.
+  ENDWHILE.
+  GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(L_GRAPHIC_CONV).
+  APPEND GRAPHIC_TABLE.
+  CALL FUNCTION 'DP_CREATE_URL'
+    EXPORTING
+      TYPE     = 'IMSHE'
+      SUBTYPE  = 'X-UNKNOWN'
+      SIZE     = GRAPHIC_SIZE
+      LIFETIME = 'T'
+    TABLES
+      DATA     = GRAPHIC_TABLE
+    CHANGING
+      URL      = URL.
+  CALL METHOD PICTURE->LOAD_PICTURE_FROM_URL
+    EXPORTING
+      URL = URL.
+  CALL METHOD PICTURE->SET_DISPLAY_MODE
+    EXPORTING
+      DISPLAY_MODE = PICTURE->DISPLAY_MODE_FIT_CENTER.
+ENDMODULE.
