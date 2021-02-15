@@ -1,0 +1,16 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       ZSH_OS_PAYMENT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+PROGRAM ZSH_OS_PAYMENT.
+TABLES: ZSH_OS_LOGIN,
+        ZSH_OS_ADD,
+        ZSH_OS_CART,
+        ZSH_OS_PAYMENT.
+DATA: WA_ADD TYPE ZSH_OS_ADD.
+INCLUDE zSH_os_payment_status_1000o01.
+
+INCLUDE zSH_os_payment_user_commandi01.
