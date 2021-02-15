@@ -1,0 +1,614 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       ZSH_OS_TOTAL_SALES1
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+PROGRAM ZSH_OS_TOTAL_SALES1.
+
+***&SPWIZARD: DATA DECLARATION FOR TABLECONTROL 'TC_EL'
+*&SPWIZARD: DEFINITION OF DDIC-TABLE
+TABLES:   ZSH_OS_BILL,
+          ZSH_OS_BILL_H.
+
+*&SPWIZARD: TYPE FOR THE DATA OF TABLECONTROL 'TC_EL'
+TYPES: BEGIN OF T_TC_EL,
+         PID    LIKE ZSH_OS_BILL-PID,
+         PNAME  LIKE ZSH_OS_BILL-PNAME,
+         PRICE  LIKE ZSH_OS_BILL-PRICE,
+         QTY    LIKE ZSH_OS_BILL-QTY,
+         AMOUNT LIKE ZSH_OS_BILL-AMOUNT,
+       END OF T_TC_EL.
+
+TYPES: BEGIN OF TY_GR,
+         BDATE  TYPE ZSH_OS_BILL_H-BDATE,
+         AMOUNT TYPE ZSH_OS_BILL_H-AMOUNT,
+       END OF TY_GR.
+
+DATA: IT_GR TYPE TABLE OF TY_GR,
+      WA_GR TYPE TY_GR.
+
+DATA: IT_GR1 TYPE TABLE OF TY_GR,
+      WA_GR1 TYPE TY_GR.
+
+*&SPWIZARD: INTERNAL TABLE FOR TABLECONTROL 'TC_EL'
+DATA:     G_TC_EL_ITAB TYPE T_TC_EL OCCURS 0,
+          G_TC_EL_WA   TYPE T_TC_EL. "work area
+DATA:     G_TC_EL_COPIED.           "copy flSH
+
+*&SPWIZARD: DECLARATION OF TABLECONTROL 'TC_EL' ITSELF
+CONTROLS: TC_EL TYPE TABLEVIEW USING SCREEN 1000.
+
+*&SPWIZARD: LINES OF TABLECONTROL 'TC_EL'
+DATA:     G_TC_EL_LINES  LIKE SY-LOOPC.
+
+DATA:     OK_CODE LIKE SY-UCOMM.
+
+DATA: AMNT TYPE ZSH_OS_BILL-AMOUNT.
+SELECTION-SCREEN BEGIN OF SCREEN 2100 AS SUBSCREEN.
+SELECT-OPTIONS SBDATE FOR ZSH_OS_BILL_H-BDATE.
+SELECTION-SCREEN END OF SCREEN 2100.
+*&SPWIZARD: OUTPUT MODULE FOR TC 'TC_EL'. DO NOT CHANGE THIS LINE!
+*&SPWIZARD: COPY DDIC-TABLE TO ITAB
+MODULE TC_EL_INIT OUTPUT.
+  IF G_TC_EL_COPIED IS INITIAL.
+*&SPWIZARD: COPY DDIC-TABLE 'ZSH_OS_BILL'
+*&SPWIZARD: INTO INTERNAL TABLE 'g_TC_EL_itab'
+
+*             SELECT * FROM ZSH_OS_BILL AS A INNER JOIN ZSH_OS_CAT AS B
+*                           ON A~PID = B~PID
+*                           INNER JOIN ZSH_OS_BILL_H AS C
+*                           ON A~BILLNO = C~BILLNO
+*           INTO CORRESPONDING FIELDS
+*           OF TABLE G_TC_EL_ITAB WHERE C~BDATE IN SBDATE AND B~CATEGORY = 'ELECTRONICS'.
+    G_TC_EL_COPIED = 'X'.
+    REFRESH CONTROL 'TC_EL' FROM SCREEN '1000'.
+  ENDIF.
+ENDMODULE.
+
+*&SPWIZARD: OUTPUT MODULE FOR TC 'TC_EL'. DO NOT CHANGE THIS LINE!
+*&SPWIZARD: MOVE ITAB TO DYNPRO
+MODULE TC_EL_MOVE OUTPUT.
+  MOVE-CORRESPONDING G_TC_EL_WA TO ZSH_OS_BILL.
+ENDMODULE.
+
+*&SPWIZARD: OUTPUT MODULE FOR TC 'TC_EL'. DO NOT CHANGE THIS LINE!
+*&SPWIZARD: GET LINES OF TABLECONTROL
+MODULE TC_EL_GET_LINES OUTPUT.
+  G_TC_EL_LINES = SY-LOOPC.
+ENDMODULE.
+
+*&SPWIZARD: INPUT MODULE FOR TC 'TC_EL'. DO NOT CHANGE THIS LINE!
+*&SPWIZARD: PROCESS USER COMMAND
+MODULE TC_EL_USER_COMMAND INPUT.
+  OK_CODE = SY-UCOMM.
+  PERFORM USER_OK_TC USING    'TC_EL'
+                              'G_TC_EL_ITAB'
+                              'FLSH'
+                     CHANGING OK_CODE.
+  SY-UCOMM = OK_CODE.
+ENDMODULE.
+
+*----------------------------------------------------------------------*
+*   INCLUDE TABLECONTROL_FORMS                                         *
+*----------------------------------------------------------------------*
+
+*&---------------------------------------------------------------------*
+*&      Form  USER_OK_TC                                               *
+*&---------------------------------------------------------------------*
+FORM USER_OK_TC USING    P_TC_NAME TYPE DYNFNAM
+                         P_TABLE_NAME
+                         P_MARK_NAME
+                CHANGING P_OK      LIKE SY-UCOMM.
+
+*&SPWIZARD: BEGIN OF LOCAL DATA----------------------------------------*
+  DATA: L_OK     TYPE SY-UCOMM,
+        L_OFFSET TYPE I.
+*&SPWIZARD: END OF LOCAL DATA------------------------------------------*
+
+*&SPWIZARD: Table control specific operations                          *
+*&SPWIZARD: evaluate TC name and operations                            *
+  SEARCH P_OK FOR P_TC_NAME.
+  IF SY-SUBRC <> 0.
+    EXIT.
+  ENDIF.
+  L_OFFSET = STRLEN( P_TC_NAME ) + 1.
+  L_OK = P_OK+L_OFFSET.
+*&SPWIZARD: execute general and TC specific operations                 *
+  CASE L_OK.
+    WHEN 'INSR'.                      "insert row
+      PERFORM FCODE_INSERT_ROW USING    P_TC_NAME
+                                        P_TABLE_NAME.
+      CLEAR P_OK.
+
+    WHEN 'DELE'.                      "delete row
+      PERFORM FCODE_DELETE_ROW USING    P_TC_NAME
+                                        P_TABLE_NAME
+                                        P_MARK_NAME.
+      CLEAR P_OK.
+
+    WHEN 'P--' OR                     "top of list
+         'P-'  OR                     "previous pSHe
+         'P+'  OR                     "next pSHe
+         'P++'.                       "bottom of list
+      PERFORM COMPUTE_SCROLLING_IN_TC USING P_TC_NAME
+                                            L_OK.
+      CLEAR P_OK.
+*     WHEN 'L--'.                       "total left
+*       PERFORM FCODE_TOTAL_LEFT USING P_TC_NAME.
+*
+*     WHEN 'L-'.                        "column left
+*       PERFORM FCODE_COLUMN_LEFT USING P_TC_NAME.
+*
+*     WHEN 'R+'.                        "column right
+*       PERFORM FCODE_COLUMN_RIGHT USING P_TC_NAME.
+*
+*     WHEN 'R++'.                       "total right
+*       PERFORM FCODE_TOTAL_RIGHT USING P_TC_NAME.
+*
+    WHEN 'MARK'.                      "mark all filled lines
+      PERFORM FCODE_TC_MARK_LINES USING P_TC_NAME
+                                        P_TABLE_NAME
+                                        P_MARK_NAME   .
+      CLEAR P_OK.
+
+    WHEN 'DMRK'.                      "demark all filled lines
+      PERFORM FCODE_TC_DEMARK_LINES USING P_TC_NAME
+                                          P_TABLE_NAME
+                                          P_MARK_NAME .
+      CLEAR P_OK.
+
+*     WHEN 'SASCEND'   OR
+*          'SDESCEND'.                  "sort column
+*       PERFORM FCODE_SORT_TC USING P_TC_NAME
+*                                   l_ok.
+
+  ENDCASE.
+
+ENDFORM.                              " USER_OK_TC
+
+*&---------------------------------------------------------------------*
+*&      Form  FCODE_INSERT_ROW                                         *
+*&---------------------------------------------------------------------*
+FORM FCODE_INSERT_ROW
+              USING    P_TC_NAME           TYPE DYNFNAM
+                       P_TABLE_NAME             .
+
+*&SPWIZARD: BEGIN OF LOCAL DATA----------------------------------------*
+  DATA L_LINES_NAME       LIKE FELD-NAME.
+  DATA L_SELLINE          LIKE SY-STEPL.
+  DATA L_LASTLINE         TYPE I.
+  DATA L_LINE             TYPE I.
+  DATA L_TABLE_NAME       LIKE FELD-NAME.
+  FIELD-SYMBOLS <TC>                 TYPE CXTAB_CONTROL.
+  FIELD-SYMBOLS <TABLE>              TYPE STANDARD TABLE.
+  FIELD-SYMBOLS <LINES>              TYPE I.
+*&SPWIZARD: END OF LOCAL DATA------------------------------------------*
+
+  ASSIGN (P_TC_NAME) TO <TC>.
+
+*&SPWIZARD: get the table, which belongs to the tc                     *
+  CONCATENATE P_TABLE_NAME '[]' INTO L_TABLE_NAME. "table body
+  ASSIGN (L_TABLE_NAME) TO <TABLE>.                "not headerline
+
+*&SPWIZARD: get looplines of TableControl                              *
+  CONCATENATE 'G_' P_TC_NAME '_LINES' INTO L_LINES_NAME.
+  ASSIGN (L_LINES_NAME) TO <LINES>.
+
+*&SPWIZARD: get current line                                           *
+  GET CURSOR LINE L_SELLINE.
+  IF SY-SUBRC <> 0.                   " append line to table
+    L_SELLINE = <TC>-LINES + 1.
+*&SPWIZARD: set top line                                               *
+    IF L_SELLINE > <LINES>.
+      <TC>-TOP_LINE = L_SELLINE - <LINES> + 1 .
+    ELSE.
+      <TC>-TOP_LINE = 1.
+    ENDIF.
+  ELSE.                               " insert line into table
+    L_SELLINE = <TC>-TOP_LINE + L_SELLINE - 1.
+    L_LASTLINE = <TC>-TOP_LINE + <LINES> - 1.
+  ENDIF.
+*&SPWIZARD: set new cursor line                                        *
+  L_LINE = L_SELLINE - <TC>-TOP_LINE + 1.
+
+*&SPWIZARD: insert initial line                                        *
+  INSERT INITIAL LINE INTO <TABLE> INDEX L_SELLINE.
+  <TC>-LINES = <TC>-LINES + 1.
+*&SPWIZARD: set cursor                                                 *
+  SET CURSOR LINE L_LINE.
+
+ENDFORM.                              " FCODE_INSERT_ROW
+
+*&---------------------------------------------------------------------*
+*&      Form  FCODE_DELETE_ROW                                         *
+*&---------------------------------------------------------------------*
+FORM FCODE_DELETE_ROW
+              USING    P_TC_NAME           TYPE DYNFNAM
+                       P_TABLE_NAME
+                       P_MARK_NAME   .
+
+*&SPWIZARD: BEGIN OF LOCAL DATA----------------------------------------*
+  DATA L_TABLE_NAME       LIKE FELD-NAME.
+
+  FIELD-SYMBOLS <TC>         TYPE CXTAB_CONTROL.
+  FIELD-SYMBOLS <TABLE>      TYPE STANDARD TABLE.
+  FIELD-SYMBOLS <WA>.
+  FIELD-SYMBOLS <MARK_FIELD>.
+*&SPWIZARD: END OF LOCAL DATA------------------------------------------*
+
+  ASSIGN (P_TC_NAME) TO <TC>.
+
+*&SPWIZARD: get the table, which belongs to the tc                     *
+  CONCATENATE P_TABLE_NAME '[]' INTO L_TABLE_NAME. "table body
+  ASSIGN (L_TABLE_NAME) TO <TABLE>.                "not headerline
+
+*&SPWIZARD: delete marked lines                                        *
+  DESCRIBE TABLE <TABLE> LINES <TC>-LINES.
+
+  LOOP AT <TABLE> ASSIGNING <WA>.
+
+*&SPWIZARD: access to the component 'FLSH' of the table header         *
+    ASSIGN COMPONENT P_MARK_NAME OF STRUCTURE <WA> TO <MARK_FIELD>.
+
+    IF <MARK_FIELD> = 'X'.
+      DELETE <TABLE> INDEX SYST-TABIX.
+      IF SY-SUBRC = 0.
+        <TC>-LINES = <TC>-LINES - 1.
+      ENDIF.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.                              " FCODE_DELETE_ROW
+
+*&---------------------------------------------------------------------*
+*&      Form  COMPUTE_SCROLLING_IN_TC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_TC_NAME  name of tablecontrol
+*      -->P_OK       ok code
+*----------------------------------------------------------------------*
+FORM COMPUTE_SCROLLING_IN_TC USING    P_TC_NAME
+                                      P_OK.
+*&SPWIZARD: BEGIN OF LOCAL DATA----------------------------------------*
+  DATA L_TC_NEW_TOP_LINE     TYPE I.
+  DATA L_TC_NAME             LIKE FELD-NAME.
+  DATA L_TC_LINES_NAME       LIKE FELD-NAME.
+  DATA L_TC_FIELD_NAME       LIKE FELD-NAME.
+
+  FIELD-SYMBOLS <TC>         TYPE CXTAB_CONTROL.
+  FIELD-SYMBOLS <LINES>      TYPE I.
+*&SPWIZARD: END OF LOCAL DATA------------------------------------------*
+
+  ASSIGN (P_TC_NAME) TO <TC>.
+*&SPWIZARD: get looplines of TableControl                              *
+  CONCATENATE 'G_' P_TC_NAME '_LINES' INTO L_TC_LINES_NAME.
+  ASSIGN (L_TC_LINES_NAME) TO <LINES>.
+
+
+*&SPWIZARD: is no line filled?                                         *
+  IF <TC>-LINES = 0.
+*&SPWIZARD: yes, ...                                                   *
+    L_TC_NEW_TOP_LINE = 1.
+  ELSE.
+*&SPWIZARD: no, ...                                                    *
+    CALL FUNCTION 'SCROLLING_IN_TABLE'
+      EXPORTING
+        ENTRY_ACT      = <TC>-TOP_LINE
+        ENTRY_FROM     = 1
+        ENTRY_TO       = <TC>-LINES
+        LAST_PSHE_FULL = 'X'
+        LOOPS          = <LINES>
+        OK_CODE        = P_OK
+        OVERLAPPING    = 'X'
+      IMPORTING
+        ENTRY_NEW      = L_TC_NEW_TOP_LINE
+      EXCEPTIONS
+*       NO_ENTRY_OR_PSHE_ACT  = 01
+*       NO_ENTRY_TO    = 02
+*       NO_OK_CODE_OR_PSHE_GO = 03
+        OTHERS         = 0.
+  ENDIF.
+
+*&SPWIZARD: get actual tc and column                                   *
+  GET CURSOR FIELD L_TC_FIELD_NAME
+             AREA  L_TC_NAME.
+
+  IF SYST-SUBRC = 0.
+    IF L_TC_NAME = P_TC_NAME.
+*&SPWIZARD: et actual column                                           *
+      SET CURSOR FIELD L_TC_FIELD_NAME LINE 1.
+    ENDIF.
+  ENDIF.
+
+*&SPWIZARD: set the new top line                                       *
+  <TC>-TOP_LINE = L_TC_NEW_TOP_LINE.
+
+
+ENDFORM.                              " COMPUTE_SCROLLING_IN_TC
+
+*&---------------------------------------------------------------------*
+*&      Form  FCODE_TC_MARK_LINES
+*&---------------------------------------------------------------------*
+*       marks all TableControl lines
+*----------------------------------------------------------------------*
+*      -->P_TC_NAME  name of tablecontrol
+*----------------------------------------------------------------------*
+FORM FCODE_TC_MARK_LINES USING P_TC_NAME
+                               P_TABLE_NAME
+                               P_MARK_NAME.
+*&SPWIZARD: EGIN OF LOCAL DATA-----------------------------------------*
+  DATA L_TABLE_NAME       LIKE FELD-NAME.
+
+  FIELD-SYMBOLS <TC>         TYPE CXTAB_CONTROL.
+  FIELD-SYMBOLS <TABLE>      TYPE STANDARD TABLE.
+  FIELD-SYMBOLS <WA>.
+  FIELD-SYMBOLS <MARK_FIELD>.
+*&SPWIZARD: END OF LOCAL DATA------------------------------------------*
+
+  ASSIGN (P_TC_NAME) TO <TC>.
+
+*&SPWIZARD: get the table, which belongs to the tc                     *
+  CONCATENATE P_TABLE_NAME '[]' INTO L_TABLE_NAME. "table body
+  ASSIGN (L_TABLE_NAME) TO <TABLE>.                "not headerline
+
+*&SPWIZARD: mark all filled lines                                      *
+  LOOP AT <TABLE> ASSIGNING <WA>.
+
+*&SPWIZARD: access to the component 'FLSH' of the table header         *
+    ASSIGN COMPONENT P_MARK_NAME OF STRUCTURE <WA> TO <MARK_FIELD>.
+
+    <MARK_FIELD> = 'X'.
+  ENDLOOP.
+ENDFORM.                                          "fcode_tc_mark_lines
+
+*&---------------------------------------------------------------------*
+*&      Form  FCODE_TC_DEMARK_LINES
+*&---------------------------------------------------------------------*
+*       demarks all TableControl lines
+*----------------------------------------------------------------------*
+*      -->P_TC_NAME  name of tablecontrol
+*----------------------------------------------------------------------*
+FORM FCODE_TC_DEMARK_LINES USING P_TC_NAME
+                                 P_TABLE_NAME
+                                 P_MARK_NAME .
+*&SPWIZARD: BEGIN OF LOCAL DATA----------------------------------------*
+  DATA L_TABLE_NAME       LIKE FELD-NAME.
+
+  FIELD-SYMBOLS <TC>         TYPE CXTAB_CONTROL.
+  FIELD-SYMBOLS <TABLE>      TYPE STANDARD TABLE.
+  FIELD-SYMBOLS <WA>.
+  FIELD-SYMBOLS <MARK_FIELD>.
+*&SPWIZARD: END OF LOCAL DATA------------------------------------------*
+
+  ASSIGN (P_TC_NAME) TO <TC>.
+
+*&SPWIZARD: get the table, which belongs to the tc                     *
+  CONCATENATE P_TABLE_NAME '[]' INTO L_TABLE_NAME. "table body
+  ASSIGN (L_TABLE_NAME) TO <TABLE>.                "not headerline
+
+*&SPWIZARD: demark all filled lines                                    *
+  LOOP AT <TABLE> ASSIGNING <WA>.
+
+*&SPWIZARD: access to the component 'FLSH' of the table header         *
+    ASSIGN COMPONENT P_MARK_NAME OF STRUCTURE <WA> TO <MARK_FIELD>.
+
+    <MARK_FIELD> = SPACE.
+  ENDLOOP.
+ENDFORM.                                          "fcode_tc_mark_lines
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_1000 INPUT.
+  CASE SY-UCOMM.
+    WHEN 'EL'.
+      REFRESH : G_TC_EL_ITAB.
+      CLEAR: G_TC_EL_WA.
+      CLEAR: AMNT.
+      SELECT A~PID A~PNAME A~PRICE A~QTY A~AMOUNT FROM ZSH_OS_BILL AS A INNER JOIN ZSH_OS_CAT AS B
+                          ON A~PID = B~PID
+                          INNER JOIN ZSH_OS_BILL_H AS C
+                          ON A~BILLNO = C~BILLNO
+          INTO CORRESPONDING FIELDS
+          OF TABLE G_TC_EL_ITAB WHERE C~BDATE IN SBDATE AND B~CATEGORY = 'ELECTRONICS'.
+      G_TC_EL_COPIED = 'X'.
+      REFRESH CONTROL 'TC_EL' FROM SCREEN '1000'.
+      LOOP AT G_TC_EL_ITAB INTO G_TC_EL_WA.
+        AMNT = AMNT + G_TC_EL_WA-AMOUNT.
+      ENDLOOP.
+
+    WHEN 'SP'.
+      REFRESH : G_TC_EL_ITAB.
+      CLEAR: G_TC_EL_WA.
+      CLEAR: AMNT.
+      SELECT A~PID A~PNAME A~PRICE A~QTY A~AMOUNT FROM ZSH_OS_BILL AS A INNER JOIN ZSH_OS_CAT AS B
+                         ON A~PID = B~PID
+                         INNER JOIN ZSH_OS_BILL_H AS C
+                         ON A~BILLNO = C~BILLNO
+         INTO CORRESPONDING FIELDS
+         OF TABLE G_TC_EL_ITAB WHERE C~BDATE IN SBDATE AND B~CATEGORY = 'SPORTS'.
+      G_TC_EL_COPIED = 'X'.
+      REFRESH CONTROL 'TC_EL' FROM SCREEN '1000'.
+      LOOP AT G_TC_EL_ITAB INTO G_TC_EL_WA.
+        AMNT = AMNT + G_TC_EL_WA-AMOUNT.
+      ENDLOOP.
+
+    WHEN 'FS'.
+      REFRESH : G_TC_EL_ITAB.
+      CLEAR: G_TC_EL_WA.
+      CLEAR: AMNT.
+      SELECT A~PID A~PNAME A~PRICE A~QTY A~AMOUNT FROM ZSH_OS_BILL AS A INNER JOIN ZSH_OS_CAT AS B
+                          ON A~PID = B~PID
+                          INNER JOIN ZSH_OS_BILL_H AS C
+                          ON A~BILLNO = C~BILLNO
+          INTO CORRESPONDING FIELDS
+          OF TABLE G_TC_EL_ITAB WHERE C~BDATE IN SBDATE AND B~CATEGORY = 'FASHION'.
+      G_TC_EL_COPIED = 'X'.
+      REFRESH CONTROL 'TC_EL' FROM SCREEN '1000'.
+      LOOP AT G_TC_EL_ITAB INTO G_TC_EL_WA.
+        AMNT = AMNT + G_TC_EL_WA-AMOUNT.
+      ENDLOOP.
+
+    WHEN 'TS'.
+      REFRESH : G_TC_EL_ITAB.
+
+      CLEAR: G_TC_EL_WA.
+      CLEAR: AMNT.
+      SELECT A~PID A~PNAME A~PRICE A~QTY A~AMOUNT FROM ZSH_OS_BILL AS A INNER JOIN ZSH_OS_CAT AS B
+                     ON A~PID = B~PID
+                     INNER JOIN ZSH_OS_BILL_H AS C
+                     ON A~BILLNO = C~BILLNO
+     INTO CORRESPONDING FIELDS
+     OF TABLE G_TC_EL_ITAB WHERE C~BDATE IN SBDATE.
+      G_TC_EL_COPIED = 'X'.
+      REFRESH CONTROL 'TC_EL' FROM SCREEN '1000'.
+      LOOP AT G_TC_EL_ITAB INTO G_TC_EL_WA.
+        AMNT = AMNT + G_TC_EL_WA-AMOUNT.
+      ENDLOOP.
+
+    WHEN 'GR'.
+      SELECT BDATE
+             AMOUNT FROM ZSH_OS_BILL_H INTO TABLE IT_GR WHERE BDATE IN SBDATE.
+
+      SORT IT_GR BY BDATE.
+
+      LOOP AT IT_GR INTO WA_GR.
+
+        AT END OF BDATE.
+          SUM.
+          WA_GR1-BDATE = WA_GR-BDATE.
+          WA_GR1-AMOUNT = WA_GR-AMOUNT.
+          APPEND WA_GR1 TO IT_GR1.
+        ENDAT.
+
+      ENDLOOP.
+
+      CALL FUNCTION 'GRAPH_3D'
+        EXPORTING
+*         AUTO_CMD_1         = ' '
+*         AUTO_CMD_2         = ' '
+*         DIM1 = ' '
+*         DIM2 = ' '
+*         TYPE = ' '
+*         DISPLAY_TYPE       = ' '
+*         INBUF              = ' '
+*         INFORM             = ' '
+*         MAIL_ALLOW         = ' '
+*         PWDID              = ' '
+*         SET_FOCUS          = 'x'
+*         SO_CONTENTS        = ' '
+*         SO_RECEIVER        = ' '
+*         SO_SEND            = ' '
+*         SO_TITLE           = ' '
+*         STAT = ' '
+*         SUPER              = ' '
+*         TIMER              = ' '
+          TITL = 'Sales with respect to bill date'
+*         VALT = ' '
+*         WDID = ' '
+*         WINID              = ' '
+*         WINPOS             = ' '
+*         WINSZX             = '50'
+*         WINSZY             = '50'
+*         X_OPT              = ' '
+*         NOTIFY             = ' '
+*         IMPORTING
+*         B_KEY              =
+*         B_TYP              =
+*         CUA_ID             =
+*         MOD_COL            =
+*         MOD_ROW            =
+*         MOD_VAL            =
+*         M_TYP              =
+*         RBUFF              =
+*         RWNID              =
+        TABLES
+          DATA = IT_GR1.
+      CALL TRANSACTION 'ZSHTS1'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_1000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_1000 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SHOW_LOGO  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SHOW_LOGO OUTPUT.
+  DATA: W_LINES TYPE I.
+  TYPES PICT_LINE(256) TYPE C.
+  DATA :
+    CONTAINER TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+    EDITOR    TYPE REF TO CL_GUI_TEXTEDIT,
+    PICTURE   TYPE REF TO CL_GUI_PICTURE,
+    PICT_TAB  TYPE TABLE OF PICT_LINE,
+    URL(255)  TYPE C.
+  DATA: GRAPHIC_URL(255).
+  DATA: BEGIN OF GRAPHIC_TABLE OCCURS 0,
+          LINE(255) TYPE X,
+        END OF GRAPHIC_TABLE.
+  DATA: L_GRAPHIC_CONV TYPE I.
+  DATA: L_GRAPHIC_OFFS TYPE I.
+  DATA: GRAPHIC_SIZE TYPE I.
+  DATA: L_GRAPHIC_XSTR TYPE XSTRING.
+  .
+  CALL METHOD CL_GUI_CFW=>FLUSH.
+  CREATE OBJECT:
+  CONTAINER EXPORTING CONTAINER_NAME = 'CONTLOGO',
+  PICTURE EXPORTING PARENT = CONTAINER.
+  CALL METHOD CL_SSF_XSF_UTILITIES=>GET_BDS_GRAPHIC_AS_BMP
+    EXPORTING
+      P_OBJECT = 'GRAPHICS'
+      P_NAME   = 'LOGO'
+      P_ID     = 'BMAP'
+      P_BTYPE  = 'BCOL'
+    RECEIVING
+      P_BMP    = L_GRAPHIC_XSTR
+*  EXCEPTIONS
+*     NOT_FOUND      = 1
+*     INTERNAL_ERROR = 2
+*     others   = 3
+    .
+  IF SY-SUBRC <> 0.
+* MESSSHE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+  GRAPHIC_SIZE = XSTRLEN( L_GRAPHIC_XSTR ).
+  L_GRAPHIC_CONV = GRAPHIC_SIZE.
+  L_GRAPHIC_OFFS = 0.
+  WHILE L_GRAPHIC_CONV > 255.
+    GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(255).
+    APPEND GRAPHIC_TABLE.
+    L_GRAPHIC_OFFS = L_GRAPHIC_OFFS + 255.
+    L_GRAPHIC_CONV = L_GRAPHIC_CONV - 255.
+  ENDWHILE.
+  GRAPHIC_TABLE-LINE = L_GRAPHIC_XSTR+L_GRAPHIC_OFFS(L_GRAPHIC_CONV).
+  APPEND GRAPHIC_TABLE.
+  CALL FUNCTION 'DP_CREATE_URL'
+    EXPORTING
+      TYPE     = 'IMSHE'
+      SUBTYPE  = 'X-UNKNOWN'
+      SIZE     = GRAPHIC_SIZE
+      LIFETIME = 'T'
+    TABLES
+      DATA     = GRAPHIC_TABLE
+    CHANGING
+      URL      = URL.
+  CALL METHOD PICTURE->LOAD_PICTURE_FROM_URL
+    EXPORTING
+      URL = URL.
+  CALL METHOD PICTURE->SET_DISPLAY_MODE
+    EXPORTING
+      DISPLAY_MODE = PICTURE->DISPLAY_MODE_FIT_CENTER.
+ENDMODULE.
