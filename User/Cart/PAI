@@ -1,0 +1,79 @@
+*----------------------------------------------------------------------*
+***INCLUDE ZSH_OS_EDIT_CART_USER_COMMAI01.
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_1000 INPUT.
+  DATA: LWA_COLS LIKE LINE OF TC_CART-COLS.
+  DATA: STCK TYPE ZSH_OS_CAT-STOCK.
+  DATA: USER_RESPONSE.
+  CASE SY-UCOMM.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'BACK'.
+      CALL TRANSACTION 'ZSHCAT'.
+    WHEN  'LG'.
+
+    WHEN 'VC'.
+      SUBMIT ZSH_OS_VIEW_CART.
+    WHEN 'TOGGLE'.
+      LOOP AT TC_CART-COLS INTO LWA_COLS WHERE INDEX GT 2.
+        IF LWA_COLS-SCREEN-INPUT = '0'.
+          LWA_COLS-SCREEN-INPUT = '1'.
+        ELSEIF LWA_COLS-SCREEN-INPUT = '1'.
+          LWA_COLS-SCREEN-INPUT = '0'.
+        ENDIF.
+        MODIFY TC_CART-COLS FROM LWA_COLS INDEX SY-TABIX.
+      ENDLOOP.
+
+
+    WHEN 'DELETE'.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          TITLEBAR              = 'User Prompt'
+          TEXT_QUESTION         = 'Are you sure you want to Delete?'
+          TEXT_BUTTON_1         = 'YES'(001)
+          TEXT_BUTTON_2         = 'NO'(002)
+          DEFAULT_BUTTON        = '1' " Yes, of course you like ABAP programs
+          DISPLAY_CANCEL_BUTTON = 'X'
+        IMPORTING
+          ANSWER                = USER_RESPONSE
+        EXCEPTIONS
+          TEXT_NOT_FOUND        = 1
+          OTHERS                = 2.
+
+      IF SY-SUBRC <> 0.
+        WRITE 'An error occured with this program'.
+        EXIT.
+      ENDIF.
+
+      IF USER_RESPONSE = '1'.
+
+
+        READ TABLE TC_CART-COLS INTO LWA_COLS WITH KEY SCREEN-INPUT = '1'.
+        IF SY-SUBRC = 0.
+          LOOP AT GT_CART INTO ZSH_OS_CART WHERE MARK = 'X'.
+            SELECT * FROM ZSH_OS_CAT WHERE PID = ZSH_OS_CART-PID.
+              STCK = ZSH_OS_CAT-STOCK + ZSH_OS_CART-QTY.
+              UPDATE ZSH_OS_CAT SET STOCK = STCK WHERE PID = ZSH_OS_CART-PID.
+
+            ENDSELECT.
+
+            UPDATE ZSH_OS_CART SET MARK = 'X' WHERE PID = ZSH_OS_CART-PID.
+            DELETE FROM ZSH_OS_CART WHERE MARK = 'X'.
+          ENDLOOP.
+        ENDIF.
+      ENDIF.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  READ_TABLE_CONTROL  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE READ_TABLE_CONTROL INPUT.
+  MODIFY GT_CART FROM ZSH_OS_CART INDEX TC_CART-CURRENT_LINE.
+ENDMODULE.
